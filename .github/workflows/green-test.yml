@@ -1,0 +1,51 @@
+# .github/workflows/green-test.yml
+name: Green DevOps Measurement
+
+on: [push]
+
+jobs:
+  build-and-measure:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------
+      # STEP 1: Start the measurement
+      - name: Start energy measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation-action@v3
+        id: eco-ci-start
+        with:
+          run-name: 'My Build Measurement'
+      # -----------------------------------------------------------------
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: Install Dependencies
+        run: npm install # This is the command we are measuring
+
+      - name: Run Tests
+        run: npm test # This is also being measured
+
+      # -----------------------------------------------------------------
+      # STEP 2: Stop and display the results
+      - name: Get measurement results
+        uses: green-coding-solutions/eco-ci-energy-estimation-action@v3
+        id: eco-ci-stop
+        with:
+          run-name: 'My Build Measurement'
+          # This links to the 'id' of the start step
+          start-step-id: 'eco-ci-start' 
+          
+      - name: Display results in Job Summary
+        run: |
+          echo "## ⚡️ Eco-CI Energy Report" >> $GITHUB_STEP_SUMMARY
+          echo "Total Energy Consumption: **${{ steps.eco-ci-stop.outputs.total-joules }} Joules**" >> $GITHUB_STEP_SUMMARY
+          echo "Total CO2 Emissions: **${{ steps.eco-ci-stop.outputs.total-co2e-in-g }} gCO2e**" >> $GITHUB_STEP_SUMMARY
+          echo "Average Power: ${{ steps.eco-ci-stop.outputs.total-average-wattage }} Watts" >> $GITHUB_STEP_SUMMARY
+          echo "Duration: ${{ steps.eco-ci-stop.outputs.total-duration-in-ms }} ms" >> $GITHUB_STEP_SUMMARY
+      # -----------------------------------------------------------------
