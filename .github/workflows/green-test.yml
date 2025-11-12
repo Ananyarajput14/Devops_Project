@@ -14,11 +14,11 @@ jobs:
       # -----------------------------------------------------------------
       # STEP 1: Start the measurement
       - name: Start energy measurement
-        # ✅ FIX: Removed "-action" from the end and updated to @v4
         uses: green-coding-solutions/eco-ci-energy-estimation@v4
         id: eco-ci-start
         with:
-          run-name: 'My Build Measurement'
+          # ✅ FIX: Add this required 'task' line
+          task: start-measurement
       # -----------------------------------------------------------------
 
       - name: Setup Node.js
@@ -33,20 +33,24 @@ jobs:
         run: npm test
 
       # -----------------------------------------------------------------
-      # STEP 2: Stop and display the results
+      # STEP 2: Get the measurement
       - name: Get measurement results
-        # ✅ FIX: Removed "-action" from the end and updated to @v4
         uses: green-coding-solutions/eco-ci-energy-estimation@v4
         id: eco-ci-stop
         with:
-          run-name: 'My Build Measurement'
-          start-step-id: 'eco-ci-start' 
+          # ✅ FIX: Add this required 'task' line
+          task: get-measurement
+          # This links to the 'id' of the start step
+          start-step-id: 'eco-ci-start'
           
+      # -----------------------------------------------------------------
+      # STEP 3: Display the results
       - name: Display results in Job Summary
-        run: |
-          echo "## ⚡️ Eco-CI Energy Report" >> $GITHUB_STEP_SUMMARY
-          echo "Total Energy Consumption: **${{ steps.eco-ci-stop.outputs.total-joules }} Joules**" >> $GITHUB_STEP_SUMMARY
-          echo "Total CO2 Emissions: **${{ steps.eco-ci-stop.outputs.total-co2e-in-g }} gCO2e**" >> $GITHUB_STEP_SUMMARY
-          echo "Average Power: ${{ steps.eco-ci-stop.outputs.total-average-wattage }} Watts" >> $GITHUB_STEP_SUMMARY
-          echo "Duration: ${{ steps.eco-ci-stop.outputs.total-duration-in-ms }} ms" >> $GITHUB_STEP_SUMMARY
+        # ✅ FIX: This is a cleaner way to show results
+        uses: green-coding-solutions/eco-ci-energy-estimation@v4
+        with:
+          # ✅ FIX: Tell the action to display
+          task: display-results
+          # This links to the 'id' of the 'get' step
+          get-measurement-step-id: 'eco-ci-stop'
       # -----------------------------------------------------------------
